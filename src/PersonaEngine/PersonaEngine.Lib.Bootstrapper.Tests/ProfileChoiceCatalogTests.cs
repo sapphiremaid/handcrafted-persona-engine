@@ -27,7 +27,7 @@ public sealed class ProfileChoiceCatalogTests
             choice
                 .Title.Should()
                 .NotBeNullOrWhiteSpace(because: $"{choice.Profile} must have a title");
-            choice.SizeLabel.Should().Contain("GB");
+            choice.SizeLabel.Should().MatchRegex(@"^~\d+(?:\.\d+)? (?:MB|GB)$");
             choice
                 .Tagline.Should()
                 .NotBeNullOrWhiteSpace(because: $"{choice.Profile} must have a tagline");
@@ -40,8 +40,6 @@ public sealed class ProfileChoiceCatalogTests
     [Fact]
     public void Profile_sizes_are_monotonically_nondecreasing_by_tier()
     {
-        // Higher tiers include every lower-tier asset, so their byte totals
-        // must never shrink as the user moves from "Try it out" → "Build with it".
         var totals = ProfileChoiceCatalog.ComputeProfileDownloadBytes(Manifest);
 
         totals[ProfileTier.TryItOut].Should().BeLessThanOrEqualTo(totals[ProfileTier.StreamWithIt]);
@@ -51,13 +49,10 @@ public sealed class ProfileChoiceCatalogTests
     }
 
     [Fact]
-    public void Profile_sizes_cover_nvidia_redists_with_fallback_values()
+    public void Profile_sizes_are_nonzero_without_nvidia_runtime_fallbacks()
     {
-        // The NVIDIA redist manifest entries carry sizeBytes: 0 because the real
-        // size only resolves at runtime. The catalog must substitute its fallback
-        // table so the user sees an honest estimate — otherwise Try-it-out would
-        // report ~0 GB for the CUDA redists the bootstrapper will actually pull.
         var totals = ProfileChoiceCatalog.ComputeProfileDownloadBytes(Manifest);
-        totals[ProfileTier.TryItOut].Should().BeGreaterThan(1_000_000_000);
+
+        totals.Values.Should().OnlyContain(bytes => bytes > 100_000_000);
     }
 }

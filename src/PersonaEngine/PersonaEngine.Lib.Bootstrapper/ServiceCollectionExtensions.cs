@@ -105,16 +105,9 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IBootstrapUserInterface, SpectreBootstrapUserInterface>();
         }
 
-        // GPU preflight — bundles nvidia-smi probe + nvcuda.dll fallback into
-        // a single IGpuPreflightCheck consumed by the runner. The two probe
-        // interfaces are registered separately so tests can substitute them.
-        services.AddSingleton<INvidiaSmiRunner, NvidiaSmiRunner>();
-        services.AddSingleton<INvcudaProbe, NvcudaProbe>();
-        services.AddSingleton<IGpuPreflightCheck>(sp => new NvidiaGpuPreflightCheck(
-            sp.GetRequiredService<INvidiaSmiRunner>(),
-            sp.GetRequiredService<INvcudaProbe>(),
-            sp.GetService<ILogger<NvidiaGpuPreflightCheck>>()
-        ));
+        // DirectML preflight for Intel/Windows. The actual ONNX provider is probed
+        // during application startup, after native dependencies have been loaded.
+        services.AddSingleton<IGpuPreflightCheck, DirectMLGpuPreflightCheck>();
 
         services.TryAddSingleton(TimeProvider.System);
 

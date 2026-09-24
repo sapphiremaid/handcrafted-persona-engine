@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -32,9 +32,9 @@
       Version="9.0.2"
     />
     <PackageReference Include="LLamaSharp" Version="0.26.0" />
-    <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.26.0" />
+    <PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.26.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Extensions" Version="0.14.0" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.24.4" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.4" />
     <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Abstractions" Version="1.74.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.74.0" />
@@ -56,7 +56,8 @@
     <PackageReference Include="Vortice.DirectComposition" Version="3.8.3" />
     <PackageReference Include="Vortice.D3DCompiler" Version="3.8.3" />
     <PackageReference Include="Whisper.net" Version="1.9.0" />
-    <PackageReference Include="Whisper.net.Runtime.Cuda.Windows" Version="1.9.0" />
+    <PackageReference Include="Whisper.net.Runtime.Vulkan" Version="1.9.0" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.9.0" />
     <PackageReference Include="OpenNLP" Version="1.3.5" />
   </ItemGroup>
   <ItemGroup>
@@ -82,11 +83,8 @@
     </Content>
   </ItemGroup>
   <!--
-    CUDA/cuDNN runtime is no longer bundled here. The bootstrapper installs
-    NVIDIA redistributables under Resources/cuda/{cudart,cublas,cufft} and
-    Resources/cudnn on first run, and Program.cs pre-loads those DLLs via
-    LoadLibraryEx so ONNX Runtime GPU and Whisper.net resolve their imports
-    against the bootstrapped copies.
+    Intel fork: ONNX Runtime DirectML, Whisper Vulkan/CPU, and LLamaSharp Vulkan are
+    supplied by NuGet packages. No CUDA/cuDNN redistributables are bootstrapped.
   -->
   <!-- Native Libs -->
   <ItemGroup>

@@ -102,7 +102,7 @@ public sealed class Audio2FaceInference : IDisposable
 
         _session = OnnxSessionFactory.Create(
             modelPath,
-            useGpu ? ExecutionProvider.CudaWithCpuFallback : ExecutionProvider.Cpu,
+            useGpu ? ExecutionProvider.DirectMLWithCpuFallback : ExecutionProvider.Cpu,
             SessionProfile.Sequential
         );
 

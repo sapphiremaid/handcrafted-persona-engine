@@ -44,7 +44,7 @@ public sealed class CtcForcedAligner : IForcedAligner
 
         _session = OnnxSessionFactory.Create(
             modelPath,
-            ExecutionProvider.CudaWithCpuFallback,
+            ExecutionProvider.DirectMLWithCpuFallback,
             SessionProfile.Sequential
         );
 

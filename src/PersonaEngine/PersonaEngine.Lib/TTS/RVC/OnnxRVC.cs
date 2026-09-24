@@ -1,4 +1,4 @@
-﻿using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using PersonaEngine.Lib.Utils.Onnx;
 using PersonaEngine.Lib.Utils.Pooling;
@@ -25,7 +25,7 @@ public class OnnxRVC : IDisposable
 
     public OnnxRVC(string modelPath, int hopsize, string vecPath)
     {
-        _model = OnnxSessionFactory.Create(modelPath, ExecutionProvider.Cuda);
+        _model = OnnxSessionFactory.Create(modelPath, ExecutionProvider.DirectML);
         _hopSize = hopsize;
         _vecModel = new ContentVec(vecPath);
 

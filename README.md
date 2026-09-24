@@ -6,17 +6,21 @@
   <p><i>An AI-driven voice, animation, and personality stack for your Live2D character.</i></p>
 
   <p>
-    <a href="https://github.com/fagenorn/handcrafted-persona-engine/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/elevenyellow/handcrafted-persona-engine?style=for-the-badge&logo=github&color=6366f1"></a>
-    <a href="https://github.com/fagenorn/handcrafted-persona-engine/releases/latest"><img alt="Downloads" src="https://img.shields.io/github/downloads/elevenyellow/handcrafted-persona-engine/total?style=for-the-badge&logo=github&color=8b5cf6"></a>
+    <a href="https://github.com/sapphiremaid/handcrafted-persona-engine/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/sapphiremaid/handcrafted-persona-engine?style=for-the-badge&logo=github&color=6366f1"></a>
+    <a href="https://github.com/sapphiremaid/handcrafted-persona-engine/releases/latest"><img alt="Downloads" src="https://img.shields.io/github/downloads/sapphiremaid/handcrafted-persona-engine/total?style=for-the-badge&logo=github&color=8b5cf6"></a>
     <a href="https://discord.gg/p3CXEyFtrA"><img alt="Discord" src="https://img.shields.io/discord/1347649495646601419?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=5865F2"></a>
     <a href="https://x.com/fagenorn"><img alt="Follow on X" src="https://img.shields.io/twitter/follow/fagenorn?style=for-the-badge&logo=x&color=000000"></a>
     <br>
     <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20x64-0078d6?style=flat-square">
     <img alt=".NET" src="https://img.shields.io/badge/.NET-9.0-512BD4?style=flat-square&logo=dotnet&logoColor=white">
-    <img alt="GPU" src="https://img.shields.io/badge/GPU-NVIDIA%20CUDA-76B900?style=flat-square&logo=nvidia&logoColor=white">
-    <img alt="License" src="https://img.shields.io/github/license/elevenyellow/handcrafted-persona-engine?style=flat-square&color=blue">
+    <img alt="GPU" src="https://img.shields.io/badge/GPU-Intel%20DirectML-0071C5?style=flat-square&logo=intel&logoColor=white">
   </p>
 </div>
+
+> [!NOTE]
+> **Intel / DirectML fork.** This fork replaces the upstream NVIDIA/CUDA inference stack with
+> DirectML for ONNX models and Vulkan (with CPU fallback for Whisper) so Persona Engine can run on
+> modern Intel graphics. It is experimental and currently tested on an Intel Arc 140V GPU.
 
 <div align="center">
 
@@ -24,7 +28,7 @@
 
 | What it is | What you need | How long to first pixel |
 | :---: | :---: | :---: |
-| Voice-driven Live2D character with LLM brain, real-time TTS, and streaming-ready output. | Windows x64, NVIDIA GPU with CUDA, ~16 GB free disk. | Download → double-click → pick a profile. |
+| Voice-driven Live2D character with LLM brain, real-time TTS, and streaming-ready output. | Windows x64, modern Intel DirectX 12 GPU, ~16 GB free disk. | Download → double-click → pick a profile. |
 
 </div>
 
@@ -71,11 +75,11 @@ The included **Aria** model is rigged for the engine's lip-sync and expression p
 ## <a id="installation-guide"></a>Getting started
 
 > [!IMPORTANT]
-> **Requires NVIDIA GPU with CUDA (Windows x64).** ASR, TTS, and RVC all run on CUDA via ONNX Runtime — CPU/AMD/Intel are not supported.
+> **Intel build requirements:** Windows 10/11 x64 and a modern Intel DirectX 12 GPU. ONNX inference uses DirectML; Whisper prefers Vulkan and falls back to CPU.
 
-1. Download `PersonaEngine-<version>-win-x64.zip` from [Releases](https://github.com/fagenorn/handcrafted-persona-engine/releases).
+1. Download `PersonaEngine-<version>-win-x64.zip` from [Releases](https://github.com/sapphiremaid/handcrafted-persona-engine/releases).
 2. Extract somewhere with ≥ 16 GB free. Models land in a `Resources/` folder next to the exe.
-3. Double-click **`PersonaEngine.exe`** and pick an install profile when prompted. Models and the NVIDIA runtime are downloaded, hash-verified, and installed automatically.
+3. Double-click **`PersonaEngine.exe`** and pick an install profile when prompted. Models are downloaded and hash-verified automatically; no CUDA/cuDNN runtime is downloaded by this fork.
 
 ### Re-run the picker
 
@@ -212,7 +216,7 @@ The asset directory layout changed when the in-app installer landed. Existing `R
   <tr>
     <td valign="top">
       <h4>In-app installer</h4>
-      Profile picker, SHA-256 verification, repair and verify modes. Ships CUDA 12.4 + cuDNN 9.1.1 + CUDA 13 redists.
+      Profile picker, SHA-256 verification, repair and verify modes. Intel fork omits NVIDIA CUDA/cuDNN redistributables.
     </td>
     <td valign="top">
       <h4>Extras</h4>
@@ -273,14 +277,14 @@ A single turn flows through these stages:
   <a href="https://discord.gg/p3CXEyFtrA" target="_blank">
     <img src="https://img.shields.io/discord/1347649495646601419?label=Join%20Discord&logo=discord&style=for-the-badge" alt="Join Discord">
   </a>
-  <p>Bugs and feature requests live on <a href="https://github.com/fagenorn/handcrafted-persona-engine/issues">GitHub Issues</a>.</p>
+  <p>Bugs and feature requests live on <a href="https://github.com/sapphiremaid/handcrafted-persona-engine/issues">GitHub Issues</a>.</p>
 </div>
 
 ## <a id="contributing"></a>Contributing
 
 PRs are welcome. The short version:
 
-1. For anything non-trivial, open an [Issue](https://github.com/fagenorn/handcrafted-persona-engine/issues) first to align on direction.
+1. For anything non-trivial, open an [Issue](https://github.com/sapphiremaid/handcrafted-persona-engine/issues) first to align on direction.
 2. Fork, branch (`feature/your-thing`), code, commit, push.
 3. Open a PR against `main` with a clear description of the change.
 
@@ -289,7 +293,7 @@ Formatting is enforced in CI via CSharpier (`dotnet csharpier check .` from `src
 ## <a id="support"></a>Support
 
 - **Community & demos:** [Discord](#community).
-- **Bugs & feature requests:** [GitHub Issues](https://github.com/fagenorn/handcrafted-persona-engine/issues).
+- **Bugs & feature requests:** [GitHub Issues](https://github.com/sapphiremaid/handcrafted-persona-engine/issues).
 - **Direct contact:** [@fagenorn on X](https://x.com/fagenorn).
 
 ---

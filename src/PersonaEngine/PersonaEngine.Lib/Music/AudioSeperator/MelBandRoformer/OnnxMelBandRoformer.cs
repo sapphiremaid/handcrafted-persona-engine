@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -61,7 +61,7 @@ public class OnnxMelBandRoformer : IAudioSourceSeparator, IAsyncDisposable
 
         _session = OnnxSessionFactory.Create(
             _cfg.ModelPath,
-            ExecutionProvider.CudaWithCpuFallback,
+            ExecutionProvider.DirectMLWithCpuFallback,
             SessionProfile.HalfParallel,
             configure: opts =>
             {

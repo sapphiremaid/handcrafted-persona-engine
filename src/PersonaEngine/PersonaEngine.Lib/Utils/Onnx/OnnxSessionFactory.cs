@@ -6,8 +6,8 @@ namespace PersonaEngine.Lib.Utils.Onnx;
 public enum ExecutionProvider
 {
     Cpu,
-    Cuda,
-    CudaWithCpuFallback,
+    DirectML,
+    DirectMLWithCpuFallback,
 }
 
 /// <summary>Pre-defined thread and execution-mode configurations for ONNX inference sessions.</summary>
@@ -28,7 +28,7 @@ public enum SessionProfile
 
 /// <summary>
 /// Factory for creating ONNX Runtime <see cref="InferenceSession"/> instances and their
-/// <see cref="SessionOptions"/> with opinionated defaults for GPU/CPU execution providers
+/// <see cref="SessionOptions"/> with opinionated defaults for DirectML/CPU execution providers
 /// and threading profiles.
 /// </summary>
 public static class OnnxSessionFactory
@@ -38,7 +38,7 @@ public static class OnnxSessionFactory
     /// Useful for testing or when additional configuration is needed before session creation.
     /// </summary>
     public static SessionOptions CreateOptions(
-        ExecutionProvider provider = ExecutionProvider.Cuda,
+        ExecutionProvider provider = ExecutionProvider.DirectML,
         SessionProfile profile = SessionProfile.Default,
         OrtLoggingLevel logLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR,
         Action<SessionOptions>? configure = null
@@ -65,7 +65,7 @@ public static class OnnxSessionFactory
     /// </summary>
     public static InferenceSession Create(
         string modelPath,
-        ExecutionProvider provider = ExecutionProvider.Cuda,
+        ExecutionProvider provider = ExecutionProvider.DirectML,
         SessionProfile profile = SessionProfile.Default,
         OrtLoggingLevel logLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR,
         Action<SessionOptions>? configure = null
@@ -110,17 +110,15 @@ public static class OnnxSessionFactory
         }
     }
 
-    private static void AppendCuda(SessionOptions options)
+    /// <summary>
+    /// DirectML requires sequential execution and memory-pattern optimization disabled.
+    /// Those constraints are applied here rather than at individual model call sites.
+    /// </summary>
+    private static void AppendDirectML(SessionOptions options)
     {
-        using var cudaOptions = new OrtCUDAProviderOptions();
-        // Use DEFAULT algo search to avoid cuDNN Frontend heuristic failures on
-        // newer GPU architectures (e.g. Blackwell SM 12.0) where bundled cuDNN
-        // lacks execution plans. DEFAULT uses the legacy cuDNN algorithm selection
-        // API which works reliably across all architectures.
-        cudaOptions.UpdateOptions(
-            new Dictionary<string, string> { ["cudnn_conv_algo_search"] = "DEFAULT" }
-        );
-        options.AppendExecutionProvider_CUDA(cudaOptions);
+        options.EnableMemoryPattern = false;
+        options.ExecutionMode = ExecutionMode.ORT_SEQUENTIAL;
+        options.AppendExecutionProvider_DML(0);
     }
 
     private static void ApplyExecutionProvider(SessionOptions options, ExecutionProvider provider)
@@ -130,16 +128,18 @@ public static class OnnxSessionFactory
             case ExecutionProvider.Cpu:
                 options.AppendExecutionProvider_CPU();
                 break;
-            case ExecutionProvider.Cuda:
-                AppendCuda(options);
+            case ExecutionProvider.DirectML:
+                AppendDirectML(options);
                 break;
-            case ExecutionProvider.CudaWithCpuFallback:
+            case ExecutionProvider.DirectMLWithCpuFallback:
                 try
                 {
-                    AppendCuda(options);
+                    AppendDirectML(options);
                 }
                 catch
                 {
+                    // Keep the DirectML-compatible sequential/no-memory-pattern settings.
+                    // They are valid for CPU execution too, just slightly less optimized.
                     options.AppendExecutionProvider_CPU();
                 }
                 break;

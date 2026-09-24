@@ -74,7 +74,7 @@ if (-not (Test-Path -LiteralPath $PublishDir)) {
 $bootstrapManagedSubdirs = @(
     'silero-vad', 'whisper', 'profanity', 'kokoro', 'qwen3-tts',
     'wav2vec2', 'opennlp', 'rvc', 'audio2face', 'mdx',
-    'mel_band_roformer', 'live2d', 'cuda', 'cudnn'
+    'mel_band_roformer', 'live2d'
 )
 
 $resourcesDir = Join-Path $PublishDir 'Resources'

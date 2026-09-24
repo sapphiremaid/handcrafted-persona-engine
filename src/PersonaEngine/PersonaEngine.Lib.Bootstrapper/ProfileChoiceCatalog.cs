@@ -6,30 +6,10 @@ namespace PersonaEngine.Lib.Bootstrapper;
 /// Builds the profile picker copy with real per-profile download sizes sourced
 /// from the install manifest. Copy is written for the target archetype —
 /// VTubers and streamers who want a talking avatar, not engineers shopping for
-/// ML components — so we avoid jargon (no "ONNX", "CUDA", "CTC aligner").
+/// ML components — so we avoid jargon (no "ONNX", "DirectML", "CTC aligner").
 /// </summary>
 public static class ProfileChoiceCatalog
 {
-    // Approximate download sizes for NVIDIA redists (manifest declares
-    // sizeBytes: 0 for those; their real size only resolves once the
-    // NvidiaRedistClient fetches the platform manifest). These numbers are
-    // within ~5% of the archive sizes reported by NVIDIA's redistrib_*.json
-    // so the profile-size estimate stays honest even before first run.
-    private static readonly IReadOnlyDictionary<string, long> NvidiaFallbackSizes = new Dictionary<
-        string,
-        long
-    >(StringComparer.Ordinal)
-    {
-        // CUDA 12 redist family (ONNX Runtime GPU)
-        ["cuda_cudart@12.4.1"] = 2_800_000,
-        ["libcublas@12.4.1"] = 400_000_000,
-        ["libcufft@12.4.1"] = 165_000_000,
-        ["cudnn@9.1.1"] = 725_000_000,
-        // CUDA 13 redist family (Whisper.net)
-        ["cuda_cudart@13.0.3"] = 2_900_000,
-        ["libcublas@13.0.3"] = 404_000_000,
-    };
-
     public static IReadOnlyList<ProfileChoice> BuildFrom(InstallManifest manifest)
     {
         var sizes = ComputeProfileDownloadBytes(manifest);
@@ -112,15 +92,7 @@ public static class ProfileChoiceCatalog
 
     private static long EstimateBytes(AssetEntry asset)
     {
-        if (asset.SizeBytes > 0)
-            return asset.SizeBytes;
-        if (asset.Source is NvidiaRedistSource nv)
-        {
-            var key = $"{nv.Package}@{nv.Version}";
-            if (NvidiaFallbackSizes.TryGetValue(key, out var size))
-                return size;
-        }
-        return 0;
+        return Math.Max(0, asset.SizeBytes);
     }
 
     private static string FormatSize(long bytes)

@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Numerics;
 using System.Security.Cryptography;
 using MathNet.Numerics.IntegralTransforms;
@@ -38,7 +38,7 @@ public class OnnxMDX : IDisposable
     {
         _params = parameters;
 
-        _model = OnnxSessionFactory.Create(modelPath, ExecutionProvider.CudaWithCpuFallback);
+        _model = OnnxSessionFactory.Create(modelPath, ExecutionProvider.DirectMLWithCpuFallback);
 
         // Warm up the model
         var dummyInput = new DenseTensor<float>(new[] { 1, 4, _params.DimF, _params.DimT });

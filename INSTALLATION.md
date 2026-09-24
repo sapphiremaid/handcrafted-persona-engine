@@ -32,12 +32,12 @@
 | | |
 |---|---|
 | **OS** | Windows 10 or 11, 64-bit. |
-| **GPU** | NVIDIA with CUDA support. AMD, Intel and CPU-only are **not** supported. |
+| **GPU** | Modern Intel DirectX 12 GPU (Arc / recent Xe-class graphics recommended). |
 | **Disk** | ~16 GB free on the drive where you extract the release (profile-dependent — see below). |
 | **Network** | Internet access the first time you launch, so the installer can download models. |
 | **Microphone + speakers/headphones** | Required for voice interaction. |
 
-That's it. **You do not need to install CUDA, cuDNN, the .NET runtime, espeak-ng, or Whisper models yourself** — the release is self-contained and the built-in installer downloads every model and native runtime it needs on first run, SHA-256-verified against the canonical manifest.
+That's it. **You do not need to install CUDA, cuDNN, the .NET runtime, espeak-ng, or Whisper models yourself.** This fork ships its DirectML/Vulkan runtimes with the app; the built-in installer downloads and SHA-256-verifies the selected model assets on first run.
 
 ---
 
@@ -55,7 +55,7 @@ That's it. **You do not need to install CUDA, cuDNN, the .NET runtime, espeak-ng
 1. Grab the latest `PersonaEngine-<version>-win-x64.zip` from the [Releases page](https://github.com/fagenorn/handcrafted-persona-engine/releases/latest).
 2. Extract it somewhere simple (e.g. `C:\PersonaEngine`). **Avoid** `C:\Program Files`, `C:\Windows`, and OneDrive-synced folders.
 3. Double-click `PersonaEngine.exe`.
-4. A console window appears with a profile picker — pick one of **Try it out**, **Stream with it**, or **Build with it** ([details below](#install-profiles)). The installer then downloads and verifies the matching models + NVIDIA runtime.
+4. A console window appears with a profile picker — pick one of **Try it out**, **Stream with it**, or **Build with it** ([details below](#install-profiles)). The installer then downloads and verifies the matching models. The Intel fork does not download an NVIDIA runtime.
 5. When install finishes, the main app window opens. Open the built-in **overlay** from the dashboard to see your avatar on your desktop — no OBS needed.
 6. Open the **LLM Connection** panel and fill in your endpoint / model / API key ([see below](#configure-llm)). You're ready to talk.
 
@@ -106,7 +106,7 @@ Pass these to `PersonaEngine.exe` from a terminal or a shortcut's target field.
 | `--verify` | Re-hash every installed asset and report mismatches **without** re-downloading. Read-only; good for "is my install healthy?". |
 | `--offline` | Refuse to touch the network. Fails fast if anything required is missing. Useful when you know everything is in place and you don't want surprise downloads. |
 | `--non-interactive` | Treat any prompt as a fatal error. Combine with `--profile=...` for unattended installs. |
-| `--skip-gpu-check` | Bypass the NVIDIA-GPU gate. Escape hatch for unusual setups; the app still needs CUDA at runtime. |
+| `--skip-gpu-check` | Bypass the early Windows/graphics preflight. DirectML is still validated during application startup. |
 
 ---
 
@@ -184,7 +184,7 @@ For developers who want to modify the engine. The in-app installer still runs on
 
 - [Git](https://git-scm.com/)
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- Windows 10/11 x64 with an NVIDIA GPU
+- Windows 10/11 x64 with a modern Intel DirectX 12 GPU
 
 **Steps:**
 
@@ -234,9 +234,10 @@ The installer is the most common failure point on a fresh machine. Everything be
   - *Cause:* fewer than ~16 GB free on the target drive (Build with it); Stream with it still needs ~4 GB.
   - *Fix:* free up space and rerun. Previously-completed downloads aren't re-fetched.
 
-- **"NVIDIA GPU not detected" on launch**
-  - *Cause:* CUDA isn't usable (no NVIDIA card, or driver install is broken).
-  - *Fix:* install the latest [NVIDIA driver](https://www.nvidia.com/Download/index.aspx) and reboot. If you're sure your card works and the gate is just wrong, `--skip-gpu-check` bypasses the check — the app will still fail at runtime if CUDA isn't actually available.
+- **"DirectML provider failed" on launch**
+  - *Cause:* Windows or the Intel graphics driver cannot initialize the DirectML ONNX execution provider.
+  - *Fix:* update Windows and install the current Intel graphics driver. The app performs this check before loading the model stack.
+
 
 - **"Another installer is already running"**
   - *Cause:* a lock file from a previous crashed install is still in `Resources/`.
@@ -262,7 +263,7 @@ The installer is the most common failure point on a fresh machine. Everything be
 Join the [Discord community](https://discord.gg/p3CXEyFtrA). When you ask for help, please include:
 
 - What profile you picked (Try / Stream / Build) and the exact error from the console.
-- Your Windows version and NVIDIA GPU model.
+- Your Windows version, Intel GPU model, and Intel graphics driver version.
 - The LLM you're connecting to.
 - Whether `PersonaEngine.exe --verify` reports mismatches.
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.ML.OnnxRuntime;
 using PersonaEngine.Lib.Audio;
@@ -237,7 +237,7 @@ internal class KokoroAudioSynthesizer : IAsyncDisposable
         {
             var modelPath = _modelProvider.GetModelPath(IO.ModelType.Kokoro.Synthesis);
 
-            _session = OnnxSessionFactory.Create(modelPath, ExecutionProvider.Cuda);
+            _session = OnnxSessionFactory.Create(modelPath, ExecutionProvider.DirectML);
         }
         catch (Exception ex)
         {

@@ -5,6 +5,7 @@ using PersonaEngine.Lib;
 using PersonaEngine.Lib.Bootstrapper;
 using PersonaEngine.Lib.Core;
 using Serilog;
+using Whisper.net.LibraryLoader;
 
 namespace PersonaEngine.App;
 
@@ -19,7 +20,7 @@ internal static class Program
 
         // Register <BaseDir>/native as an extra DLL search directory for loose
         // native libs relocated by the publish target. This only needs to happen
-        // once and has no dependency on CUDA assets.
+        // once and has no dependency on ML backend assets.
         NativeLibraryLoader.RegisterNativeSearchDirectory();
 
         // ── Bootstrap ────────────────────────────────────────────────────────────
@@ -34,7 +35,7 @@ internal static class Program
         // PERSONAENGINE_SKIP_BOOTSTRAP is truthy (set automatically by
         // Properties/launchSettings.json in VS / Rider / `dotnet run`), we skip
         // the runner entirely. Assets under Resources/ must then already be
-        // populated out-of-band — the CUDA preload below will log and move on
+        // populated out-of-band — downstream subsystems will surface clear errors
         // if they aren't, and downstream subsystems will surface clearer errors.
         var parsedArgs = CommandLineArgs.Parse(args);
         if (ShouldSkipBootstrap(parsedArgs, out var skipReason))
@@ -50,25 +51,19 @@ internal static class Program
             return 1;
         }
 
-        // ── Native CUDA / LLama pre-load (order matters) ─────────────────────────
-        // 1. PreloadCudaRuntime registers the bootstrapped cudart/cublas/cufft/cudnn
-        //    DLLs with the Windows loader. Once mapped, ONNX Runtime GPU and
-        //    Whisper.net resolve their imports against these copies regardless of
-        //    the process DLL search path.
-        // 2. PreloadLlamaBackend then loads cuda12/llama.dll, whose transitive
-        //    dependency on ggml-cuda.dll -> cudart64_12.dll/cublas64_12.dll can
-        //    only resolve once step 1 has completed. Calling step 2 before step 1
-        //    on a system without a global CUDA install is what produced the
-        //    `llama.dll: DllNotFoundException` users hit on fresh installs.
-        // 3. BridgeLlamaLogging wires LLamaSharp's log callback after the backend
-        //    is known-good, so load-time diagnostics flow through Serilog.
-        NativeLibraryLoader.PreloadCudaRuntime();
+        // -- Native ML runtime setup -------------------------------------------------
+        // Whisper prefers Vulkan on Intel GPUs and falls back to CPU if Vulkan cannot initialize.
+        RuntimeOptions.RuntimeLibraryOrder =
+        [
+            RuntimeLibrary.Vulkan,
+            RuntimeLibrary.Cpu,
+        ];
+
+        // Qwen3 expressive TTS uses LLamaSharp's Vulkan backend in this fork.
         NativeLibraryLoader.PreloadLlamaBackend();
         LoggingConfiguration.BridgeLlamaLogging();
 
-        // OrtEnv.Instance() triggers the GPU-enabled onnxruntime.dll load, which itself
-        // imports cudart64_12.dll/cublas64_12.dll. Must run after PreloadCudaRuntime
-        // so those imports resolve against the bootstrapped copies.
+        // Initialize ONNX Runtime logging after DirectML is available.
         LoggingConfiguration.SuppressOnnxRuntimeWarnings();
 
         // ── Configuration + validation ───────────────────────────────────────────
@@ -148,7 +143,7 @@ internal static class Program
         var bootstrapServices = new ServiceCollection();
         bootstrapServices.AddBootstrapper(parsedArgs.NonInteractive);
         // Wire MEL through the static Serilog logger so bootstrap-time diagnostics
-        // (per-asset download failures, HF/NVIDIA retries, plan details) reach the
+        // (per-asset download failures, provider retries, plan details) reach the
         // console sink. Without this, ILogger<T> in the bootstrap graph no-ops and
         // the only operator-visible signal is the final "Bootstrap failed" FTL line.
         bootstrapServices.AddLogging(b => b.AddSerilog(dispose: false));

@@ -97,7 +97,7 @@ public sealed class Qwen3TtsGgufEngine : IDisposable
         // Load streaming audio decoder (ONNX, GPU-accelerated)
         var decoderSession = OnnxSessionFactory.Create(
             modelProvider.GetModelPath(IO.ModelType.Qwen3.Decoder),
-            ExecutionProvider.Cuda,
+            ExecutionProvider.DirectML,
             SessionProfile.Sequential
         );
 

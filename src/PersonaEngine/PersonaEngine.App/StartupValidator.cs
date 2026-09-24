@@ -9,13 +9,10 @@ namespace PersonaEngine.App;
 
 /// <summary>
 ///     Runs environment checks before the DI container is built.
-///     Catches missing CUDA, espeak-ng, and config issues early with actionable messages
+///     Catches missing DirectML, espeak-ng, and config issues early with actionable messages
 ///     instead of cryptic native-loader exceptions deep in service resolution.
-///     GPU / driver detection is intentionally absent: the bootstrapper's
-///     <see cref="PersonaEngine.Lib.Bootstrapper.GpuPreflight.IGpuPreflightCheck" /> already
-///     validated the NVIDIA driver, compute capability, and nvidia-smi availability before
-///     this validator runs — duplicating that here would be redundant and subtly disagree
-///     on version floors. Model-existence probes (Whisper, Kokoro, Silero, OpenNLP, Live2D
+///     The bootstrapper performs an early Windows-version check; this validator performs
+///     the authoritative DirectML provider probe after native dependencies are available. Model-existence probes (Whisper, Kokoro, Silero, OpenNLP, Live2D
 ///     avatars) are likewise absent: <see cref="PersonaEngine.Lib.Assets.IAssetCatalog" />
 ///     is the single source of truth for what is installed.
 /// </summary>
@@ -31,7 +28,7 @@ internal static class StartupValidator
         var errors = 0;
         var warnings = 0;
 
-        CheckCuda(log, ref errors);
+        CheckDirectML(log, ref errors);
         CheckEspeakNg(log, config, ref errors);
         CheckPrompt(log, config, ref warnings);
 
@@ -54,26 +51,22 @@ internal static class StartupValidator
         return errors == 0;
     }
 
-    private static void CheckCuda(ILogger log, ref int errors)
+    private static void CheckDirectML(ILogger log, ref int errors)
     {
         try
         {
             using var opts = new SessionOptions();
             opts.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR;
-            opts.AppendExecutionProvider_CUDA();
-            log.Information("CUDA: Execution provider available");
+            opts.EnableMemoryPattern = false;
+            opts.ExecutionMode = ExecutionMode.ORT_SEQUENTIAL;
+            opts.AppendExecutionProvider_DML(0);
+            log.Information("DirectML: Execution provider available");
         }
         catch (Exception ex)
         {
-            var detail =
-                ex.Message.Contains("cudnn", StringComparison.OrdinalIgnoreCase)
-                    ? "cuDNN libraries not found"
-                : ex.Message.Contains("cuda", StringComparison.OrdinalIgnoreCase)
-                    ? "CUDA runtime libraries not found"
-                : $"CUDA provider failed: {Truncate(ex.Message, 80)}";
-
+            var detail = $"DirectML provider failed: {Truncate(ex.Message, 120)}";
             log.Error(
-                "CUDA: {Detail}. Ensure NVIDIA drivers are up to date and native/ folder contains CUDA/cuDNN DLLs. See INSTALLATION.md section 2",
+                "DirectML: {Detail}. Ensure Windows and your Intel graphics driver are up to date. See INSTALLATION.md.",
                 detail
             );
             errors++;
